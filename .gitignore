@@ -96,6 +96,8 @@ ENV/
 *.h5bak
 *.jpg
 *.cp
+*.ttf
+*.ttc
 
 !requirements.txt
 !fontlist.txt

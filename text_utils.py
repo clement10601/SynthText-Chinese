@@ -547,6 +547,7 @@ class TextSource(object):
         self.lang = lang
         # parse English text
         if self.lang == "ENG":
+            print('Generate English Data with NLTK:PlaintextCorpusReader')
             corpus = PlaintextCorpusReader("./", fn)
 
             self.words = corpus.words()
@@ -555,7 +556,7 @@ class TextSource(object):
 
         # parse Japanese text
         elif self.lang == "JPN":
-
+            print('Generate Japanese Data with NLTK:ChasenCorpusReader')
             # convert fs into chasen file
             _, ext = os.path.splitext(os.path.basename(fn))
             fn_chasen = fn.replace(ext, ".chasen")
@@ -581,6 +582,7 @@ class TextSource(object):
             #                              sent_tokenizer=jp_sent_tokenizer,
             #                              word_tokenizer=jp_chartype_tokenizer)
         elif self.lang == "ZHTW":
+            print('Generate Traditional Chinese Data with NLTK:sinica_treebank')
             self.words = []
             self.sents = []
             self.paras = []
@@ -591,15 +593,17 @@ class TextSource(object):
             self.words = sinica_treebank.words()
             self.sents = sinica_treebank.sents()
             self.paras = sinica_treebank.parsed_sents()
-            print(self.words)
-            print(self.sents)
-            print(self.paras)
         else:
-            corpus = PlaintextCorpusReader("./", fn)
-
-            self.words = corpus.words()
-            self.sents = corpus.sents()
-            self.paras = corpus.paras()
+            self.words = []
+            self.sents = []
+            self.paras = []
+            #data = SinicaTreebankCorpusReader('./', fn, encoding='utf-8')
+            #self.words = data.words()
+            #self.sents = data.sents()
+            #self.paras = data.parsed_sents()
+            self.words = sinica_treebank.words()
+            self.sents = sinica_treebank.sents()
+            self.paras = sinica_treebank.parsed_sents()
         # distribution over line/words for LINE/PARA:
         self.p_line_nline = np.array([0.85, 0.10, 0.05])
         self.p_line_nword = [4,3,12]  # normal: (mu, std)

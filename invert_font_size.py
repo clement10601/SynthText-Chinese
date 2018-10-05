@@ -11,7 +11,7 @@ import pickle as cp
 
 pygame.init()
 
-ys = np.arange(8, 200)
+ys = np.arange(16, 200)
 A = np.c_[ys, np.ones_like(ys)]
 
 xs = []
@@ -21,10 +21,9 @@ FS = FontState()
 # plt.figure()
 # plt.hold(True)
 for i in range(len(FS.fonts)):
-    font = freetype.Font(FS.fonts[i], size=12)
+    font = freetype.Font(FS.fonts[i], size=18)
     h = []
     for y in ys:
-        print(y)
         h.append(font.get_sized_glyph_height(float(y)))
     h = np.array(h)
     m, _, _, _ = np.linalg.lstsq(A, h)

@@ -1,32 +1,9 @@
-# SynthText for (English + Japanese)
+# SynthText for (English + Japanese + Trad. Chinese)
 Code for generating synthetic text images as described in ["Synthetic Data for Text Localisation in Natural Images", Ankush Gupta, Andrea Vedaldi, Andrew Zisserman, CVPR 2016](http://www.robots.ox.ac.uk/~vgg/data/scenetext/) with support for japanese characters
 
 ## TODO
 
-Add support for chinese
-
-## Output samples
-
-
-**Synthetic Japanese Text Samples 1**
-
-![Japanese example 1](results/sample1.png "Synthetic Japanese Text Samples 1")
-
-
-**Synthetic Japanese Text Samples 2**
-
-![Japanese example 2](results/sample2.png "Synthetic Japanese Text Samples 2")
-
-
-**Synthetic Japanese Text Samples 3**
-
-![Japanese example 3](results/sample3.png "Synthetic Japanese Text Samples 3")
-
-
-**Synthetic Japanese Text Samples 4**
-
-![Japanese example 4](results/sample4.png "Synthetic Japanese Text Samples 4")
-
+Add support for chinese traditional powered by nltk sinica_treebank data
 
 The library is written in Python. The main dependencies are:
 
@@ -49,17 +26,17 @@ Put your text data and font as follow
 data
 ├── dset.h5
 ├── fonts
+│   ├── genfont_list.py                     : auto-gen fontlist.txt
 │   ├── fontlist.txt                        : your font list
-│   ├── ubuntu
-│   ├── ubuntucondensed
-│   ├── ubuntujapanese                      : your japanese font
-│   └── ubuntumono
+│   ├── cht/                                : trad. chinese fonts dir
+│   ├── jpn/                                : japanese fonts dir
+│   └── eng/                                : english fonts dir
 ├── models
-│   ├── char_freq.cp
+│   ├── char_freq.cp                        : gen by update_freq_nltk.py
 │   ├── colors_new.cp
-│   └── font_px2pt.cp
+│   └── font_px2pt.cp                       : gen by invert_font_size.py
 └── newsgroup
-    └── newsgroup.txt                       : your text source
+    └── newsgroup.txt                       : your text source (for japanese)
 ```
 
 ### Install dependencies
@@ -67,15 +44,15 @@ data
 ```
 # For japanese
 sudo apt-get install libmecab2 libmecab-dev mecab mecab-ipadic mecab-ipadic-utf8 mecab-utils
+# For japanese
+sudo apt-get install libmecab2 libmecab-dev mecab mecab-ipadic mecab-ipadic-utf8 mecab-utils
 ```
 
 ### Generate font model and char model
 ```
 python invert_font_size.py
-python update_freq.py
+python update_freq_nltk.py
 
-mv char_freq.cp data/models/
-mv font_px2pt.cp data/models/
 ```
 
 ### Then go to next

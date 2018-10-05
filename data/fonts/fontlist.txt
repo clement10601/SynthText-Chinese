@@ -1,5 +1,12 @@
 cht/JhengHei.ttf
 cht/行書體.ttc
+cht/GenRyuMinTW-Heavy.ttf
+cht/GenRyuMinTW-Light.ttf
+cht/GenRyuMinTW-Regular.ttf
+cht/GenRyuMinTW-SemiBold.ttf
+cht/GenRyuMinTW-Medium.ttf
 cht/緞帶體.ttc
+cht/GenRyuMinTW-Bold.ttf
+cht/GenRyuMinTW-ExtraLight.ttf
 cht/酒桶體.ttc
 cht/連連體W4.ttc
