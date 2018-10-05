@@ -44,8 +44,8 @@ data
 ```
 # For japanese
 sudo apt-get install libmecab2 libmecab-dev mecab mecab-ipadic mecab-ipadic-utf8 mecab-utils
-# For japanese
-sudo apt-get install libmecab2 libmecab-dev mecab mecab-ipadic mecab-ipadic-utf8 mecab-utils
+# For Traditional Chinese
+pip install nltk
 ```
 
 ### Generate font model and char model
