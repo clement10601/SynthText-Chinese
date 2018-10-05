@@ -12,14 +12,14 @@ with open(filename) as f:
         x = x.decode('utf-8')
         c += Counter(x.strip())
         cnt += len(x.strip())
-        # print c
-print cnt
+        # print(c)
+print(cnt)
 
 for key in c:
     c[key] = float(c[key]) / cnt
-    print key, c[key]
+    print(key, c[key])
 
 d = dict(c)
-# print d
+# print(d)
 with open("char_freq.cp", 'wb') as f:
     pickle.dump(d, f)

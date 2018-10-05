@@ -88,3 +88,16 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# other
+*.txt
+*.html
+*.h5
+*.h5bak
+*.jpg
+*.cp
+
+!requirements.txt
+!fontlist.txt
+!newsgroup.txt
+

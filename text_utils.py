@@ -8,7 +8,7 @@ import scipy.io as sio
 import os.path as osp
 import random, os
 import cv2
-import cPickle as cp
+import pickle as cp
 import scipy.signal as ssig
 import scipy.stats as sstat
 import pygame, pygame.locals
@@ -22,6 +22,7 @@ from logger import logger
 
 import nltk, re, pprint
 from nltk import word_tokenize, sent_tokenize
+from nltk.corpus import sinica_treebank
 from nltk.corpus.reader import *
 from nltk.corpus.reader.util import *
 from nltk.text import Text
@@ -29,7 +30,7 @@ from nltk.corpus.reader.chasen import *
 import subprocess
 
 def sample_weighted(p_dict):
-    ps = p_dict.keys()
+    ps = list(p_dict.keys())
     return p_dict[np.random.choice(ps,p=ps)]
 
 def move_bb(bbs, t):
@@ -57,7 +58,7 @@ def crop_safe(arr, rect, bbs=[], pad=0):
     v1 = [min(arr.shape[0], rect[0]+rect[2]), min(arr.shape[1], rect[1]+rect[3])]
     arr = arr[v0[0]:v1[0],v0[1]:v1[1],...]
     if len(bbs) > 0:
-        for i in xrange(len(bbs)):
+        for i in range(len(bbs)):
             bbs[i,0] -= v0[0]
             bbs[i,1] -= v0[1]
         return arr, bbs
@@ -114,8 +115,8 @@ class RenderFont(object):
 
         # text-source : gets english text:
         self.text_source = TextSource(min_nchar=self.min_nchar,
-                                      fn=osp.join(data_dir,'newsgroup/newsgroup.txt'),
-                                      lang=lang)
+                                    fn=osp.join(data_dir,'newsgroup/newsgroup.txt'),
+                                    lang=lang)
 
         # get font-state object:
         self.font_state = FontState(data_dir)
@@ -195,9 +196,9 @@ class RenderFont(object):
         # baseline state
         mid_idx = wl//2
         BS = self.baselinestate.get_sample()
-        curve = [BS['curve'](i-mid_idx) for i in xrange(wl)]
+        curve = [BS['curve'](i-mid_idx) for i in range(wl)]
         curve[mid_idx] = -np.sum(curve) / (wl-1)
-        rots  = [-int(math.degrees(math.atan(BS['diff'](i-mid_idx)/(font.size/2)))) for i in xrange(wl)]
+        rots  = [-int(math.degrees(math.atan(BS['diff'](i-mid_idx)/(font.size/2)))) for i in range(wl)]
 
         bbs = []
         # place middle char
@@ -213,7 +214,7 @@ class RenderFont(object):
         # render chars to the left and right:
         last_rect = rect
         ch_idx = []
-        for i in xrange(wl):
+        for i in range(wl):
             #skip the middle character
             if i==mid_idx: 
                 bbs.append(mid_ch_bb)
@@ -325,7 +326,7 @@ class RenderFont(object):
         """
         n,_ = bbs.shape
         coords = np.zeros((2,4,n))
-        for i in xrange(n):
+        for i in range(n):
             coords[:,:,i] = bbs[i,:2][:,None]
             coords[0,1,i] += bbs[i,2]
             coords[:,2,i] += bbs[i,2:4]
@@ -354,11 +355,11 @@ class RenderFont(object):
         i = 0
         while i < self.max_shrink_trials and max_font_h > self.min_font_h:
             # if i > 0:
-            #     print colorize(Color.BLUE, "shrinkage trial : %d"%i, True)
+            #     print(colorize(Color.BLUE, "shrinkage trial : %d"%i, True))
 
             # sample a random font-height:
             f_h_px = self.sample_font_height_px(self.min_font_h, max_font_h)
-            #print "font-height : %.2f (min: %.2f, max: %.2f)"%(f_h_px, self.min_font_h,max_font_h)
+            #print("font-height : %.2f (min: %.2f, max: %.2f)"%(f_h_px, self.min_font_h,max_font_h))
             # convert from pixel-height to font-point-size:
             f_h = self.font_state.get_font_size(font, f_h_px)
 
@@ -370,7 +371,7 @@ class RenderFont(object):
 
             # compute the max-number of lines/chars-per-line:
             nline,nchar = self.get_nline_nchar(mask.shape[:2],f_h,f_h*f_asp)
-            #print "  > nline = %d, nchar = %d"%(nline, nchar)
+            #print("  > nline = %d, nchar = %d"%(nline, nchar))
 
             assert nline >= 1 and nchar >= self.min_nchar
 
@@ -380,7 +381,7 @@ class RenderFont(object):
 
             if len(text)==0 or np.any([len(line)==0 for line in text]):
                 continue
-            #print colorize(Color.GREEN, text)
+            #print(colorize(Color.GREEN, text))
 
             # render the text:
             txt_arr,txt,bb = self.render_curved(font, text)
@@ -431,12 +432,13 @@ class FontState(object):
         font_model_path = osp.join(data_dir, 'models/font_px2pt.cp')
 
         # get character-frequencies in the English language:
-        with open(char_freq_path,'r') as f:
-            self.char_freq = cp.load(f)
+        with open(char_freq_path,'rb') as f:
+            self.char_freq = cp.load(f, encoding='bytes')
 
         # get the model to convert from pixel to font pt size:
-        with open(font_model_path,'r') as f:
-            self.font_model = cp.load(f)
+        with open(font_model_path,'rb') as f:
+            self.font_model = cp.load(f, encoding='bytes')
+        
 
         # get the names of fonts to use:
         self.FONT_LIST = osp.join(data_dir, 'fonts/fontlist.txt')
@@ -455,7 +457,7 @@ class FontState(object):
         # get the [height,width] of each character:
         try:
             sizes = font.get_metrics(chars,size)
-            good_idx = [i for i in xrange(len(sizes)) if sizes[i] is not None]
+            good_idx = [i for i in range(len(sizes)) if sizes[i] is not None]
             sizes,w = [sizes[i] for i in good_idx], w[good_idx]
             sizes = np.array(sizes).astype('float')[:,[3,4]]
             r = np.abs(sizes[:,1]/sizes[:,0]) # width/height
@@ -472,7 +474,7 @@ class FontState(object):
         """
         Returns the font-size which corresponds to FONT_SIZE_PX pixels font height.
         """
-        m = self.font_model[font.name]
+        m = self.font_model[bytes(font.name, 'utf-8')]
         return m[0]*font_size_px + m[1] #linear model
 
 
@@ -545,8 +547,7 @@ class TextSource(object):
         self.lang = lang
         # parse English text
         if self.lang == "ENG":
-            corpus = PlaintextCorpusReader("./",
-                                         fn)
+            corpus = PlaintextCorpusReader("./", fn)
 
             self.words = corpus.words()
             self.sents = corpus.sents()
@@ -558,11 +559,11 @@ class TextSource(object):
             # convert fs into chasen file
             _, ext = os.path.splitext(os.path.basename(fn))
             fn_chasen = fn.replace(ext, ".chasen")
-            print "Convert {} into {}".format(fn, fn_chasen)
+            print("Convert {} into {}".format(fn, fn_chasen))
 
             cmd = "mecab -Ochasen {} > {}".format(fn, fn_chasen)
-            print "The following cmd below was executed to convert into chasen (for Japanese)"
-            print "\t{}".format(cmd)
+            print("The following cmd below was executed to convert into chasen (for Japanese)")
+            print("\t{}".format(cmd))
             p = subprocess.call(cmd, shell=True)
             data = ChasenCorpusReader('./', fn_chasen, encoding='utf-8')
 
@@ -579,7 +580,26 @@ class TextSource(object):
             #                              para_block_reader=read_line_block,
             #                              sent_tokenizer=jp_sent_tokenizer,
             #                              word_tokenizer=jp_chartype_tokenizer)
+        elif self.lang == "ZHTW":
+            self.words = []
+            self.sents = []
+            self.paras = []
+            #data = SinicaTreebankCorpusReader('./', fn, encoding='utf-8')
+            #self.words = data.words()
+            #self.sents = data.sents()
+            #self.paras = data.parsed_sents()
+            self.words = sinica_treebank.words()
+            self.sents = sinica_treebank.sents()
+            self.paras = sinica_treebank.parsed_sents()
+            print(self.words)
+            print(self.sents)
+            print(self.paras)
+        else:
+            corpus = PlaintextCorpusReader("./", fn)
 
+            self.words = corpus.words()
+            self.sents = corpus.sents()
+            self.paras = corpus.paras()
         # distribution over line/words for LINE/PARA:
         self.p_line_nline = np.array([0.85, 0.10, 0.05])
         self.p_line_nword = [4,3,12]  # normal: (mu, std)
@@ -605,6 +625,14 @@ class TextSource(object):
             line = txt  # .decode('utf-8')
             for ch in line:
                 if ch.isalnum() or self.is_cjk(ch):
+                    chcnt += 1
+
+            return float(chcnt) / (len(txt) + 0.0) > f
+        elif self.lang == "ZHTW":
+            chcnt = 0
+            line = txt  # .decode('utf-8')
+            for ch in line:
+                if ch.isalnum():
                     chcnt += 1
 
             return float(chcnt) / (len(txt) + 0.0) > f
@@ -636,8 +664,12 @@ class TextSource(object):
         """
         ls = [len(l) for l in lines]
         max_l = max(ls)
-        for i in xrange(len(lines)):
-            l = lines[i].strip()
+        for i in range(len(lines)):
+            if isinstance(lines[i], list):
+                word = ''.join(lines[i])
+                l = word.strip()
+            else:
+                l = lines[i].strip()
             dl = max_l-ls[i]
             lspace = dl//2
             rspace = dl-lspace
@@ -651,8 +683,11 @@ class TextSource(object):
             iter = 0
             while not np.all(self.is_good(lines,f)) and iter < niter:
                 iter += 1
-                line_start = np.random.choice(len(self.sents)-nline)
-                lines = [self.sents[line_start+i] for i in range(nline)]
+                if len(self.sents)-nline > 0:
+                    line_start = np.random.choice(len(self.sents)-nline)
+                    lines = [self.sents[line_start+i] for i in range(nline)]
+                else:
+                    lines = None
             return lines
 
         lines = ['']
@@ -708,7 +743,7 @@ class TextSource(object):
 
         # get number of words:
         nword = [self.p_line_nword[2]*sstat.beta.rvs(a=self.p_line_nword[0], b=self.p_line_nword[1])
-                 for _ in xrange(nline)]
+                 for _ in range(nline)]
         nword = [max(1,int(np.ceil(n))) for n in nword]
 
         lines = self.get_lines(nline, nword, nchar_max, f=0.35)
@@ -724,7 +759,7 @@ class TextSource(object):
 
         # get number of words:
         nword = [self.p_para_nword[2]*sstat.beta.rvs(a=self.p_para_nword[0], b=self.p_para_nword[1])
-                 for _ in xrange(nline)]
+                 for _ in range(nline)]
         nword = [max(1,int(np.ceil(n))) for n in nword]
 
         lines = self.get_lines(nline, nword, nchar_max, f=0.35)
@@ -732,6 +767,6 @@ class TextSource(object):
             # center align the paragraph-text:
             if np.random.rand() < self.center_para:
                 lines = self.center_align(lines)
-            return '\n'.join(lines)
+            return '\n'.join(str(e) for e in lines)
         else:
             return []

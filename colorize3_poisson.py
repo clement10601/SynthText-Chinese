@@ -6,7 +6,7 @@ import scipy.ndimage as scim
 import scipy.ndimage.interpolation as sii
 import os
 import os.path as osp
-import cPickle as cp
+import pickle as cp
 #import Image
 from PIL import Image
 from poisson_reconstruct import blit_images
@@ -29,23 +29,25 @@ class Layer(object):
         # color for the image:
         if color.ndim==1: # constant color for whole layer
             ncol = color.size
-            if ncol == 1 : #grayscale layer
-                self.color = color * np.ones((n,m,3),'uint8')
-            if ncol == 3 : 
-                self.color = np.ones((n,m,3),'uint8') * color[None,None,:]
+            # if ncol == 1 : #grayscale layer
+            #     self.color = color * np.ones((n,m,3),'uint8')
+            # elif ncol == 3 : # handle RGB layer
+            #     self.color = np.ones((n,m,3),'uint8') * color[None,None,:]
+            # else: # handle RGBA layer
+            self.color = np.ones((n,m,ncol),'uint8') * color[None,None,:]
         elif color.ndim==2: # grayscale image
             self.color = np.repeat(color[:,:,None],repeats=3,axis=2).copy().astype('uint8')
         elif color.ndim==3: #rgb image
             self.color = color.copy().astype('uint8')
         else:
-            print color.shape
+            print(color.shape)
             raise Exception("color datatype not understood")
 
 class FontColor(object):
 
     def __init__(self, col_file):
-        with open(col_file,'r') as f:
-            self.colorsRGB = cp.load(f)
+        with open(col_file,'rb') as f:
+            self.colorsRGB = cp.load(f, encoding='bytes')
         self.ncol = self.colorsRGB.shape[0]
 
         # convert color-means from RGB to LAB for better nearest neighbour
@@ -200,13 +202,16 @@ class Colorize(object):
         a_b = back.alpha/255.0
         c_f = fore.color
         c_b = back.color
-
         a_r = a_f + a_b - a_f*a_b
+        c_blend = self.blend(c_f, c_b, blend_type)
+        c_fb = (a_f*a_b)[:,:,None]
+        if c_blend.shape != c_fb.shape:
+            blend_type = 1
         if blend_type != None:
-            c_blend = self.blend(c_f, c_b, blend_type)
+            c_fb = (a_f*a_b)[:,:,None]
             c_r = (   ((1-a_f)*a_b)[:,:,None] * c_b
                     + ((1-a_b)*a_f)[:,:,None] * c_f
-                    + (a_f*a_b)[:,:,None] * c_blend   )
+                    + c_fb * c_blend   )
         else:
             c_r = (   ((1-a_f)*a_b)[:,:,None] * c_b
                     + a_f[:,:,None]*c_f    )
@@ -402,7 +407,7 @@ class Colorize(object):
 
         diff = np.linalg.norm(bg_px-txt_px,ord=None,axis=1)
         diff = np.percentile(diff,[10,30,50,70,90])
-        print "color diff percentile :", diff
+        print("color diff percentile :", diff)
         return diff, (bgo,txto)
 
     def color(self, bg_arr, text_arr, hs, place_order=None, pad=20):
@@ -425,7 +430,7 @@ class Colorize(object):
 
         # initialize the placement order:
         if place_order is None:
-            place_order = np.array(xrange(len(text_arr)))
+            place_order = np.array(range(len(text_arr)))
 
         rendered = []
         for i in place_order[::-1]:
