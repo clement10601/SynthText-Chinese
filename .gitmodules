@@ -1,0 +1,6 @@
+[submodule "prep_scripts/prep_scripts/FCRN-DepthPrediction"]
+	path = prep_scripts/prep_scripts/FCRN-DepthPrediction
+	url = https://github.com/iro-cp/FCRN-DepthPrediction.git
+[submodule "prep_scripts/FCRN-DepthPrediction"]
+	path = prep_scripts/FCRN-DepthPrediction
+	url = https://github.com/iro-cp/FCRN-DepthPrediction.git
